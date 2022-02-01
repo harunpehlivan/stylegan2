@@ -6,6 +6,7 @@
 
 """Helper for managing networks."""
 
+
 import types
 import inspect
 import re
@@ -23,7 +24,7 @@ from .. import util
 from .tfutil import TfExpression, TfExpressionEx
 
 _import_handlers = []  # Custom import handlers for dealing with legacy data in pickle import.
-_import_module_src = dict()  # Source code for temporary modules created during pickle import.
+_import_module_src = {}
 
 
 def import_handler(handler_func):
@@ -120,15 +121,17 @@ class Network:
         self._build_func = None  # User-supplied build function that constructs the network.
         self._build_func_name = None  # Name of the build function.
         self._build_module_src = None  # Full source code of the module containing the build function.
-        self._run_cache = dict()  # Cached graph data for Network.run().
+        self._run_cache = {}
 
     def _init_graph(self) -> None:
         # Collect inputs.
-        self.input_names = []
+        self.input_names = [
+            param.name
+            for param in inspect.signature(self._build_func).parameters.values()
+            if param.kind == param.POSITIONAL_OR_KEYWORD
+            and param.default is param.empty
+        ]
 
-        for param in inspect.signature(self._build_func).parameters.values():
-            if param.kind == param.POSITIONAL_OR_KEYWORD and param.default is param.empty:
-                self.input_names.append(param.name)
 
         self.num_inputs = len(self.input_names)
         assert self.num_inputs >= 1
@@ -167,7 +170,9 @@ class Network:
             raise ValueError("Network output shapes not defined. Please call x.set_shape() where applicable.")
         if any(not isinstance(comp, Network) for comp in self.components.values()):
             raise ValueError("Components of a Network must be Networks themselves.")
-        if len(self.components) != len(set(comp.name for comp in self.components.values())):
+        if len(self.components) != len(
+            {comp.name for comp in self.components.values()}
+        ):
             raise ValueError("Components of a Network must have unique names.")
 
         # List inputs and outputs.
@@ -254,15 +259,17 @@ class Network:
 
     def __getstate__(self) -> dict:
         """Pickle export."""
-        state = dict()
-        state["version"]            = 4
-        state["name"]               = self.name
-        state["static_kwargs"]      = dict(self.static_kwargs)
-        state["components"]         = dict(self.components)
-        state["build_module_src"]   = self._build_module_src
-        state["build_func_name"]    = self._build_func_name
-        state["variables"]          = list(zip(self.own_vars.keys(), tfutil.run(list(self.own_vars.values()))))
-        return state
+        return {
+            'version': 4,
+            'name': self.name,
+            'static_kwargs': dict(self.static_kwargs),
+            'components': dict(self.components),
+            'build_module_src': self._build_module_src,
+            'build_func_name': self._build_func_name,
+            'variables': list(
+                zip(self.own_vars.keys(), tfutil.run(list(self.own_vars.values())))
+            ),
+        }
 
     def __setstate__(self, state: dict) -> None:
         """Pickle import."""
@@ -513,7 +520,7 @@ class Network:
             num_params = sum(int(np.prod(var.shape.as_list())) for var in layer_trainables)
             weights = [var for var in layer_trainables if var.name.endswith("/weight:0")]
             weights.sort(key=lambda x: len(x.name))
-            if len(weights) == 0 and len(layer_trainables) == 1:
+            if not weights and len(layer_trainables) == 1:
                 weights = layer_trainables
             total_params += num_params
 
@@ -555,7 +562,7 @@ _print_legacy_warning = True
 def _handle_legacy_output_transforms(output_transform, dynamic_kwargs):
     global _print_legacy_warning
     legacy_kwargs = ["out_mul", "out_add", "out_shrink", "out_dtype"]
-    if not any(kwarg in dynamic_kwargs for kwarg in legacy_kwargs):
+    if all(kwarg not in dynamic_kwargs for kwarg in legacy_kwargs):
         return output_transform, dynamic_kwargs
 
     if _print_legacy_warning:

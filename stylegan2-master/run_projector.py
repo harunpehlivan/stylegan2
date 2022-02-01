@@ -74,8 +74,7 @@ def _parse_num_range(s):
     '''Accept either a comma separated list of numbers 'a,b,c' or a range 'a-c' and return as a list of ints.'''
 
     range_re = re.compile(r'^(\d+)-(\d+)$')
-    m = range_re.match(s)
-    if m:
+    if m := range_re.match(s):
         return list(range(int(m.group(1)), int(m.group(2))+1))
     vals = s.split(',')
     return [int(x) for x in vals]

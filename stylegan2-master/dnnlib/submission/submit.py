@@ -137,15 +137,13 @@ def get_path_from_template(path_template: str, path_type: PathType = PathType.AU
 
 def get_template_from_path(path: str) -> str:
     """Convert a normal path back to its template representation."""
-    path = path.replace("\\", "/")
-    return path
+    return path.replace("\\", "/")
 
 
 def convert_path(path: str, path_type: PathType = PathType.AUTO) -> str:
     """Convert a normal path to template and the convert it back to a normal path with given path type."""
     path_template = get_template_from_path(path)
-    path = get_path_from_template(path_template, path_type)
-    return path
+    return get_path_from_template(path_template, path_type)
 
 
 def set_user_name_override(name: str) -> None:
@@ -283,15 +281,14 @@ def run_wrapper(submit_config: SubmitConfig) -> None:
     except:
         if is_local:
             raise
-        else:
-            traceback.print_exc()
+        traceback.print_exc()
 
-            log_src = os.path.join(submit_config.run_dir, "log.txt")
-            log_dst = os.path.join(get_path_from_template(submit_config.run_dir_root), "{0}-error.txt".format(submit_config.run_name))
-            shutil.copyfile(log_src, log_dst)
+        log_src = os.path.join(submit_config.run_dir, "log.txt")
+        log_dst = os.path.join(get_path_from_template(submit_config.run_dir_root), "{0}-error.txt".format(submit_config.run_name))
+        shutil.copyfile(log_src, log_dst)
 
-            # Defer sys.exit(1) to happen after we close the logs and create a _finished.txt
-            exit_with_errcode = True
+        # Defer sys.exit(1) to happen after we close the logs and create a _finished.txt
+        exit_with_errcode = True
     finally:
         open(os.path.join(submit_config.run_dir, "_finished.txt"), "w").close()
 
@@ -312,9 +309,7 @@ def submit_run(submit_config: SubmitConfig, run_func_name: str, **run_func_kwarg
     submit_config = copy.deepcopy(submit_config)
 
     submit_target = submit_config.submit_target
-    farm = None
-    if submit_target == SubmitTarget.LOCAL:
-        farm = internal.local.Target()
+    farm = internal.local.Target() if submit_target == SubmitTarget.LOCAL else None
     assert farm is not None # unknown target
 
     # Disallow submitting jobs with zero num_gpus.

@@ -52,7 +52,7 @@ def style_mixing_example(network_pkl, row_seeds, col_seeds, truncation_psi, col_
     all_z = np.stack([np.random.RandomState(seed).randn(*Gs.input_shape[1:]) for seed in all_seeds]) # [minibatch, component]
     all_w = Gs.components.mapping.run(all_z, None) # [minibatch, layer, component]
     all_w = w_avg + (all_w - w_avg) * truncation_psi # [minibatch, layer, component]
-    w_dict = {seed: w for seed, w in zip(all_seeds, list(all_w))} # [layer, component]
+    w_dict = dict(zip(all_seeds, list(all_w)))
 
     print('Generating images...')
     all_images = Gs.components.synthesis.run(all_w, **Gs_syn_kwargs) # [minibatch, height, width, channel]
@@ -91,8 +91,7 @@ def _parse_num_range(s):
     '''Accept either a comma separated list of numbers 'a,b,c' or a range 'a-c' and return as a list of ints.'''
 
     range_re = re.compile(r'^(\d+)-(\d+)$')
-    m = range_re.match(s)
-    if m:
+    if m := range_re.match(s):
         return list(range(int(m.group(1)), int(m.group(2))+1))
     vals = s.split(',')
     return [int(x) for x in vals]

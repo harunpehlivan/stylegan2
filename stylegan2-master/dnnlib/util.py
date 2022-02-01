@@ -52,11 +52,7 @@ class Logger(object):
     """Redirect stderr to stdout, optionally print stdout to a file, and optionally force flushing on both stdout and the file."""
 
     def __init__(self, file_name: str = None, file_mode: str = "w", should_flush: bool = True):
-        self.file = None
-
-        if file_name is not None:
-            self.file = open(file_name, file_mode)
-
+        self.file = open(file_name, file_mode) if file_name is not None else None
         self.should_flush = should_flush
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -72,7 +68,7 @@ class Logger(object):
 
     def write(self, text: str) -> None:
         """Write text to stdout (and a file) and optionally flush."""
-        if len(text) == 0: # workaround for a bug in VSCode debugger: sys.stdout.write(''); sys.stdout.flush() => crash
+        if not text: # workaround for a bug in VSCode debugger: sys.stdout.write(''); sys.stdout.flush() => crash
             return
 
         if self.file is not None:
@@ -234,7 +230,7 @@ def get_module_from_obj_name(obj_name: str) -> Tuple[types.ModuleType, str]:
 
 def get_obj_from_module(module: types.ModuleType, obj_name: str) -> Any:
     """Traverses the object name and returns the last (rightmost) python object."""
-    if obj_name == '':
+    if not obj_name:
         return module
     obj = module
     for part in obj_name.split("."):
@@ -327,13 +323,13 @@ def copy_files_and_create_dirs(files: List[Tuple[str, str]]) -> None:
 
 def is_url(obj: Any, allow_file_urls: bool = False) -> bool:
     """Determine whether the given object is a valid URL string."""
-    if not isinstance(obj, str) or not "://" in obj:
+    if not isinstance(obj, str) or "://" not in obj:
         return False
     if allow_file_urls and obj.startswith('file:///'):
         return True
     try:
         res = requests.compat.urlparse(obj)
-        if not res.scheme or not res.netloc or not "." in res.netloc:
+        if not res.scheme or not res.netloc or "." not in res.netloc:
             return False
         res = requests.compat.urlparse(requests.compat.urljoin(obj, "/"))
         if not res.scheme or not res.netloc or not "." in res.netloc:

@@ -83,12 +83,13 @@ def absolute_variable_scope(scope: str, **kwargs) -> tf.variable_scope:
 
 def _sanitize_tf_config(config_dict: dict = None) -> dict:
     # Defaults.
-    cfg = dict()
-    cfg["rnd.np_random_seed"]               = None      # Random seed for NumPy. None = keep as is.
-    cfg["rnd.tf_random_seed"]               = "auto"    # Random seed for TensorFlow. 'auto' = derive from NumPy random state. None = keep as is.
-    cfg["env.TF_CPP_MIN_LOG_LEVEL"]         = "1"       # 0 = Print all available debug info from TensorFlow. 1 = Print warnings and errors, but disable debug info.
-    cfg["graph_options.place_pruned_graph"] = True      # False = Check that all ops are available on the designated device. True = Skip the check for ops that are not used.
-    cfg["gpu_options.allow_growth"]         = True      # False = Allocate all GPU memory at the beginning. True = Allocate only as much GPU memory as needed.
+    cfg = {
+        'rnd.np_random_seed': None,
+        'rnd.tf_random_seed': 'auto',
+        'env.TF_CPP_MIN_LOG_LEVEL': '1',
+        'graph_options.place_pruned_graph': True,
+        'gpu_options.allow_growth': True,
+    }
 
     # Remove defaults for environment variables that are already set.
     for key in list(cfg):

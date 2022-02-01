@@ -41,7 +41,7 @@ def adjust_dynamic_range(data, drange_in, drange_out):
     return data
 
 def create_image_grid(images, grid_size=None):
-    assert images.ndim == 3 or images.ndim == 4
+    assert images.ndim in [3, 4]
     num, img_w, img_h = images.shape[0], images.shape[-1], images.shape[-2]
 
     if grid_size is not None:
@@ -58,13 +58,9 @@ def create_image_grid(images, grid_size=None):
     return grid
 
 def convert_to_pil_image(image, drange=[0,1]):
-    assert image.ndim == 2 or image.ndim == 3
+    assert image.ndim in [2, 3]
     if image.ndim == 3:
-        if image.shape[0] == 1:
-            image = image[0] # grayscale CHW => HW
-        else:
-            image = image.transpose(1, 2, 0) # CHW -> HWC
-
+        image = image[0] if image.shape[0] == 1 else image.transpose(1, 2, 0)
     image = adjust_dynamic_range(image, drange, [0,255])
     image = np.rint(image).clip(0, 255).astype(np.uint8)
     fmt = 'RGB' if image.ndim == 3 else 'L'
