@@ -138,20 +138,26 @@ def _parse_comma_sep(s):
 
 #----------------------------------------------------------------------------
 
-_examples = '''examples:
+_examples = (
+    '''examples:
 
   # Train StyleGAN2 using the FFHQ dataset
   python %(prog)s --num-gpus=8 --data-dir=~/datasets --config=config-f --dataset=ffhq --mirror-augment=true
 
 valid configs:
 
-  ''' + ', '.join(_valid_configs) + '''
+  '''
+    + ', '.join(_valid_configs)
+    + '''
 
 valid metrics:
 
-  ''' + ', '.join(sorted([x for x in metric_defaults.keys()])) + '''
+  '''
+    + ', '.join(sorted(list(metric_defaults.keys())))
+    + '''
 
 '''
+)
 
 def main():
     parser = argparse.ArgumentParser(

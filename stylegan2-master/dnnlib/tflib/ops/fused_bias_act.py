@@ -76,7 +76,7 @@ def _fused_bias_act_ref(x, b, axis, act, alpha, gain):
     x = tf.convert_to_tensor(x)
     b = tf.convert_to_tensor(b) if b is not None else tf.constant([], dtype=x.dtype)
     act_spec = activation_funcs[act]
-    assert b.shape.rank == 1 and (b.shape[0] == 0 or b.shape[0] == x.shape[axis])
+    assert b.shape.rank == 1 and b.shape[0] in [0, x.shape[axis]]
     assert b.shape[0] == 0 or 0 <= axis < x.shape.rank
     if alpha is None:
         alpha = act_spec.def_alpha
@@ -166,8 +166,7 @@ def _fused_bias_act_cuda(x, b, axis, act, alpha, gain):
             dx = grad_dx(dy, x, y)
             db = grad_db(dx)
             def grad2(d_dx, d_db):
-                d_dy = grad2_d_dy(d_dx, d_db, x, y)
-                return d_dy
+                return grad2_d_dy(d_dx, d_db, x, y)
             return (dx, db), grad2
         return y, grad
 
